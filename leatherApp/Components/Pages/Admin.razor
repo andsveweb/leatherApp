@@ -1,0 +1,225 @@
+@page "/admin"
+@attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
+@using leatherApp.Data
+@using leatherApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject LeatherShopContext Db
+@inject IJSRuntime JS
+@inject IWebHostEnvironment Env
+
+<PageTitle>Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+
+    <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-4">
+        Manage Products
+    </MudText>
+    <MudPaper Class="pa-6 mb-6" Elevation="2" Style="background-color:var(--card-bg);">
+        <MudText Typo="Typo.h6" Style="color:var(--text-on-card);" Class="mb-4">Add a new product</MudText>
+
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="newProduct.Name" Label="Name" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="newProduct.Price" Label="Price" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="newProduct.Description" Label="Description" Variant="Variant.Outlined" Lines="2" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect @bind-Value="newProduct.CategoryId" Label="Category" Variant="Variant.Outlined">
+                    @foreach (var cat in categories)
+                    {
+                        <MudSelectItem Value="@cat.CategoryId">@cat.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="newProduct.StockQuantity" Label="Stock" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="newProduct.ImageUrl" Label="Image path" Variant="Variant.Outlined" ReadOnly="true" Class="mb-2" />
+                <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept=".jpg,.jpeg,.png" @ref="fileUpload">
+                    <CustomContent>
+                        <MudButton Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                                   OnClick="@context.OpenFilePickerAsync"
+                                   Style="color:var(--brand-primary); border-color:var(--brand-primary);">
+                            Upload image
+                        </MudButton>
+                    </CustomContent>
+                </MudFileUpload>
+            </MudItem>
+        </MudGrid>
+
+        <MudButton Variant="Variant.Filled" Class="mt-4"
+                   Style="background-color:var(--brand-primary); color:var(--brand-primary-text);"
+                   OnClick="SaveProduct">
+            @(newProduct.ProductId == 0 ? "Add Product" : "Save Changes")
+        </MudButton>
+    </MudPaper>
+    <MudPaper Class="pa-6 mb-6" Elevation="2" Style="background-color:var(--card-bg);">
+        <MudText Typo="Typo.h6" Style="color:var(--text-on-card);" Class="mb-4">Manage categories</MudText>
+
+        <div class="d-flex align-center mb-4" style="gap:12px;">
+            <MudTextField @bind-Value="newCategoryName" Label="New category name" Variant="Variant.Outlined" Class="flex-grow-1" />
+            <MudButton Variant="Variant.Filled"
+                       Style="background-color:var(--brand-primary); color:var(--brand-primary-text);"
+                       OnClick="AddCategory">
+                Add
+            </MudButton>
+        </div>
+
+        @foreach (var cat in categories)
+        {
+            <div class="d-flex align-center justify-space-between mb-2">
+                <MudText Style="color:var(--text-on-card);">@cat.Name</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                               OnClick="@(() => DeleteCategory(cat))" />
+            </div>
+        }
+    </MudPaper>
+    <MudText Typo="Typo.h6" Style="color:var(--text-on-card);" Class="mb-2">Existing products</MudText>
+    <MudTable Items="products" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Category</MudTh>
+            <MudTh>Price</MudTh>
+            <MudTh>Stock</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Category?.Name</MudTd>
+            <MudTd>$@context.Price</MudTd>
+            <MudTd>@context.StockQuantity</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="mr-2"
+                           OnClick="@(() => StartEdit(context))">
+                    Edit
+                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error"
+                           OnClick="@(() => DeleteProduct(context))">
+                    Delete
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private List<Product> products = new();
+    private List<leatherApp.Models.Category> categories = new();
+    private string newCategoryName = "";
+    private Product newProduct = new();
+    private MudFileUpload<IBrowserFile>? fileUpload;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+    
+    private async Task OnFileSelected(IBrowserFile file)
+    {
+        if (file == null)
+            return;
+
+        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+        var imagesFolder = Path.Combine(Env.WebRootPath, "images");
+        Directory.CreateDirectory(imagesFolder);
+
+        var filePath = Path.Combine(imagesFolder, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(stream);
+        }
+
+        newProduct.ImageUrl = $"/images/{fileName}";
+    }
+
+    private async Task LoadData()
+    {
+        products = await Db.Products.Include(p => p.Category).ToListAsync();
+        categories = await Db.Categories.ToListAsync();
+    }
+    
+    private async Task AddCategory()
+    {
+        if (string.IsNullOrWhiteSpace(newCategoryName))
+            return;
+
+        Db.Categories.Add(new leatherApp.Models.Category { Name = newCategoryName.Trim() });
+        await Db.SaveChangesAsync();
+        newCategoryName = "";
+        await LoadData();
+    }
+
+    private async Task DeleteCategory(leatherApp.Models.Category category)
+    {
+        // Check if any products still use this category
+        bool hasProducts = await Db.Products.AnyAsync(p => p.CategoryId == category.CategoryId);
+
+        if (hasProducts)
+        {
+            await JS.InvokeAsync<object>("alert",
+                $"Can't delete \"{category.Name}\" — it still has products. Move or delete those products first.");
+            return;
+        }
+
+        bool confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Delete category \"{category.Name}\"?");
+
+        if (confirmed)
+        {
+            Db.Categories.Remove(category);
+            await Db.SaveChangesAsync();
+            await LoadData();
+        }
+    }
+
+    private async Task SaveProduct()
+    {
+        if (newProduct.ProductId == 0)
+        {
+            // New product
+            newProduct.DateCreated = DateTime.UtcNow;
+            Db.Products.Add(newProduct);
+        }
+        else
+        {
+            // Existing product being edited
+            Db.Products.Update(newProduct);
+        }
+
+        await Db.SaveChangesAsync();
+
+        newProduct = new Product();
+        if (fileUpload != null)
+        {
+            await fileUpload.ClearAsync();
+        }
+        await LoadData();
+    }
+    
+    private async Task DeleteProduct(Product product)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to delete {product.Name}?");
+
+        if (confirmed)
+        {
+            Db.Products.Remove(product);
+            await Db.SaveChangesAsync();
+            await LoadData();
+        }
+    }
+
+    private void StartEdit(Product product)
+    {
+        newProduct = product;
+    }
+}

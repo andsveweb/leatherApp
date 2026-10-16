@@ -1,0 +1,204 @@
+@page "/cart"
+@attribute [Authorize]
+@using leatherApp.Data
+@using leatherApp.Models
+@inject CartService CartSvc
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResource> L
+@inject ISnackbar Snackbar
+
+<PageTitle>Your Cart</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+
+    <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-4">
+        @L["YourCart"]
+    </MudText>
+
+    @if (items == null)
+    {
+        <MudText>Loading...</MudText>
+    }
+    else if (items.Count == 0)
+    {
+        <MudText Style="color:var(--brand-medium);">@L["CartEmpty"]</MudText>
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="2" Style="background-color:var(--card-bg);">
+            @foreach (var item in items)
+            {
+                <div class="d-flex align-center justify-space-between mb-3">
+                    <div class="d-flex align-center">
+                        <MudImage Src="@item.Product?.ImageUrl" Height="60" Width="60" ObjectFit="ObjectFit.Cover" Class="mr-3" Style="border-radius:6px;" />
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Style="color:var(--text-on-card);">@item.Product?.Name</MudText>
+                            <MudText Typo="Typo.body2" Style="color:var(--brand-medium);" Class="mb-1">
+                                @PriceFormatter.Format(item.Product?.Price ?? 0) @L["Each"]
+                            </MudText>
+                            <div class="d-flex align-center">
+                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
+                                               Size="Size.Small" Style="color:var(--brand-primary);"
+                                               OnClick="@(() => DecreaseQty(item.CartItemId))" />
+                                <MudText Class="mx-2" Style="color:var(--text-on-card);">@item.Quantity</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                               Size="Size.Small" Style="color:var(--brand-primary);"
+                                               OnClick="@(() => IncreaseQty(item.CartItemId))" />
+                            </div>
+                        </div>
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                   OnClick="@(() => RemoveItem(item.CartItemId))" />
+                </div>
+                <MudDivider Class="mb-3" />
+            }
+
+            <div class="d-flex justify-space-between align-center mt-4">
+                <MudText Typo="Typo.h6" Style="color:var(--text-on-card);">@L["Total"]</MudText>
+                <MudText Typo="Typo.h6" Style="color:var(--brand-primary);">@PriceFormatter.Format(Total)</MudText>
+            </div>
+            <MudText Typo="Typo.h6" Style="color:var(--text-on-card);" Class="mt-4 mb-2">@L["ShippingAddress"]</MudText>
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="shippingName" Label="@L["Name"]" Variant="Variant.Outlined"
+                                  Error="@(triedSubmit && !IsNameValid())"
+                                  ErrorText="@L["InvalidName"]" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="shippingAddress" Label="@L["Address"]" Variant="Variant.Outlined"
+                                  Error="@(triedSubmit && string.IsNullOrWhiteSpace(shippingAddress))"
+                                  ErrorText="@L["FieldRequired"]" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="shippingPostalCode" Label="@L["PostalCode"]" Variant="Variant.Outlined"
+                                  Error="@(triedSubmit && !IsPostalValid())"
+                                  ErrorText="@L["InvalidPostalCode"]" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="8">
+                    <MudTextField @bind-Value="shippingCity" Label="@L["City"]" Variant="Variant.Outlined"
+                                  Error="@(triedSubmit && !IsCityValid())"
+                                  ErrorText="@L["InvalidCity"]" Immediate="true" />
+                </MudItem>
+            </MudGrid>
+            <MudButton Variant="Variant.Filled" Size="Size.Large" FullWidth="true" Class="mt-4"
+                       Style="background-color:var(--brand-primary); color:var(--brand-primary-text);"
+                       OnClick="DoCheckout">
+                @L["Checkout"]
+            </MudButton>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    private List<CartItem>? items;
+    private string? shippingName;
+    private string? shippingAddress;
+    private string? shippingPostalCode;
+    private string? shippingCity;
+    private bool triedSubmit = false;
+
+    
+
+    private decimal Total => items?.Sum(i => (i.Product?.Price ?? 0) * i.Quantity) ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCart();
+    }
+    
+    private bool IsPostalValid()
+    {
+        if (string.IsNullOrWhiteSpace(shippingPostalCode)) return false;
+        var digits = new string(shippingPostalCode.Where(char.IsDigit).ToArray());
+        return digits.Length == 5;
+    }
+    
+    private bool IsCityValid()
+    {
+        if (string.IsNullOrWhiteSpace(shippingCity)) return false;
+        // Must contain at least one letter (not just numbers/symbols)
+        return shippingCity.Any(char.IsLetter);
+    }
+    
+    private bool IsNameValid()
+    {
+        if (string.IsNullOrWhiteSpace(shippingName)) return false;
+        return shippingName.Any(char.IsLetter);
+    }
+
+    private async Task LoadCart()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            items = await CartSvc.GetCartItems(userId);
+        }
+    }
+
+    private async Task RemoveItem(int cartItemId)
+    {
+        await CartSvc.RemoveFromCart(cartItemId);
+        await LoadCart();
+    }
+    
+    private async Task IncreaseQty(int cartItemId)
+    {
+        await CartSvc.IncreaseQuantity(cartItemId);
+        await LoadCart();
+    }
+
+    private async Task DecreaseQty(int cartItemId)
+    {
+        await CartSvc.DecreaseQuantity(cartItemId);
+        await LoadCart();
+    }
+    
+    private async Task DoCheckout()
+    {
+        triedSubmit = true;
+
+        // If any field is invalid, stop — the fields show their own red errors
+        if (!IsNameValid() ||
+            string.IsNullOrWhiteSpace(shippingAddress) ||
+            !IsCityValid() ||
+            !IsPostalValid())
+        {
+            return;
+        }
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var email = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                    ?? user.FindFirst("email")?.Value;
+
+        if (userId == null)
+        {
+            Snackbar.Add(L["MustLogIn"], Severity.Error);
+            return;
+        }
+
+        // Cart must not be empty
+        if (items == null || items.Count == 0)
+        {
+            Snackbar.Add(L["CartEmpty"], Severity.Warning);
+            return;
+        }
+
+        var orderId = await CartSvc.Checkout(userId, email,
+            shippingName, shippingAddress, shippingPostalCode, shippingCity);
+
+        if (orderId > 0)
+        {
+            Nav.NavigateTo($"/order-confirmed/{orderId}");
+        }
+        else
+        {
+            Snackbar.Add(L["CheckoutFailed"], Severity.Error);
+        }
+    }
+}

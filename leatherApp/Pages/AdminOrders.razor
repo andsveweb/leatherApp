@@ -1,0 +1,190 @@
+@page "/admin/orders"
+@attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Authorization
+@using leatherApp.Data
+@using MudBlazor
+@using leatherApp.Models
+@inject CartService CartSvc
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);">
+            Manage Orders
+        </MudText>
+        <MudButton Href="/admin/orders/archived" Variant="Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.Archive">Archived</MudButton>
+    </div>
+    
+    <div class="d-flex mb-4" style="gap:8px; flex-wrap:wrap;">
+        <MudButton Variant="@(filter == "All" ? Variant.Filled : Variant.Outlined)"
+                   Style="@(filter == "All" ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                   OnClick='@(() => SetFilter("All"))'>All</MudButton>
+        <MudButton Variant="@(filter == "Pending" ? Variant.Filled : Variant.Outlined)"
+                   Style="@(filter == "Pending" ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                   OnClick='@(() => SetFilter("Pending"))'>Pending</MudButton>
+        <MudButton Variant="@(filter == "Paid" ? Variant.Filled : Variant.Outlined)"
+                   Style="@(filter == "Paid" ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                   OnClick='@(() => SetFilter("Paid"))'>Paid</MudButton>
+        <MudButton Variant="@(filter == "Packed" ? Variant.Filled : Variant.Outlined)"
+                   Style="@(filter == "Packed" ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                   OnClick='@(() => SetFilter("Packed"))'>Packed</MudButton>
+        <MudButton Variant="@(filter == "Shipped" ? Variant.Filled : Variant.Outlined)"
+                   Style="@(filter == "Shipped" ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                   OnClick='@(() => SetFilter("Shipped"))'>Shipped</MudButton>
+    </div>
+
+    @if (orders == null)
+    {
+        <MudText>Loading...</MudText>
+    }
+    else if (orders.Count == 0)
+    {
+        <MudText Style="color:var(--brand-medium);">No orders yet.</MudText>
+    }
+    else
+    {
+        @foreach (var order in FilteredOrders)
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2" Style="background-color:var(--card-bg);">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudText Typo="Typo.h6" Style="color:var(--text-on-card);">Order #@order.OrderId</MudText>
+                    <MudChip T="string" Color="@StatusColor(order.Status)" Size="Size.Small">@order.Status</MudChip>
+                </div>
+
+                <MudText Typo="Typo.body2" Style="color:var(--text-muted);">
+                    @order.OrderDate.ToString("d MMM yyyy HH:mm") — @order.Auth0UserId
+                </MudText>
+                @if (!string.IsNullOrEmpty(order.ShippingName))
+                {
+                    <MudText Typo="Typo.body2" Style="color:var(--text-on-card);" Class="mt-1">
+                        <strong>Ship to:</strong> @order.ShippingName, @order.ShippingAddress, @order.ShippingPostalCode @order.ShippingCity
+                    </MudText>
+                }
+
+                <MudDivider Class="my-2" />
+
+                @foreach (var line in order.Items)
+                {
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <div class="d-flex align-center">
+                            @if (line.Product != null && !string.IsNullOrEmpty(line.Product.ImageUrl))
+                            {
+                                <MudLink Href="@($"/product/{line.ProductId}")">
+                                    <MudImage Src="@line.Product.ImageUrl" Height="40" Width="40" ObjectFit="ObjectFit.Cover" Class="mr-2" Style="border-radius:4px;" />
+                                </MudLink>
+                            }
+                            <MudLink Href="@($"/product/{line.ProductId}")" Underline="Underline.Hover">
+                                <MudText Typo="Typo.body2" Style="color:var(--text-on-card);">@line.Product?.Name × @line.Quantity</MudText>
+                            </MudLink>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color:var(--brand-medium);">@PriceFormatter.Format(line.PriceAtPurchase * line.Quantity)</MudText>
+                    </div>
+                }
+
+                <MudDivider Class="my-2" />
+                <div class="d-flex justify-end mb-2">
+                    <MudButton Size="Size.Small" Variant="Variant.Text"
+                               StartIcon="@Icons.Material.Filled.Archive"
+                               OnClick="@(() => Archive(order.OrderId))">Archive</MudButton>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.subtitle2" Style="color:var(--brand-primary);">
+                        Total: @PriceFormatter.Format(order.TotalAmount)
+                    </MudText>
+
+                    <div class="d-flex" style="gap:8px;">
+                        <MudButton Size="Size.Small"
+                                   Variant="@(HasReached(order.Status, "Paid") ? Variant.Filled : Variant.Outlined)"
+                                   Style="@(HasReached(order.Status, "Paid") ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                                   OnClick="@(() => ToggleStatus(order, "Paid"))">Mark Paid</MudButton>
+                        <MudButton Size="Size.Small"
+                                   Variant="@(HasReached(order.Status, "Packed") ? Variant.Filled : Variant.Outlined)"
+                                   Style="@(HasReached(order.Status, "Packed") ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                                   OnClick="@(() => ToggleStatus(order, "Packed"))">Mark Packed</MudButton>
+                        <MudButton Size="Size.Small"
+                                   Variant="@(HasReached(order.Status, "Shipped") ? Variant.Filled : Variant.Outlined)"
+                                   Style="@(HasReached(order.Status, "Shipped") ? "background-color:var(--brand-primary); color:var(--brand-primary-text);" : "")"
+                                   OnClick="@(() => ToggleStatus(order, "Shipped"))">Mark Shipped</MudButton>
+                    </div>
+                </div>
+            </MudPaper>
+        }
+    }
+
+</MudContainer>
+
+@code {
+    private List<Order>? orders;
+    private string filter = "All";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private IEnumerable<Order> FilteredOrders =>
+        filter == "All"
+            ? orders ?? Enumerable.Empty<Order>()
+            : (orders ?? Enumerable.Empty<Order>()).Where(o => o.Status == filter);
+
+    private void SetFilter(string newFilter)
+    {
+        filter = newFilter;
+    }
+
+    private async Task Archive(int orderId)
+    {
+        await CartSvc.SetArchived(orderId, true);
+        await Load();
+    }
+    
+    private readonly string[] stages = { "Paid", "Packed", "Shipped" };
+
+    private bool HasReached(string? current, string stage)
+    {
+        var currentIndex = Array.IndexOf(stages, current);
+        var stageIndex = Array.IndexOf(stages, stage);
+        return currentIndex >= stageIndex && currentIndex >= 0;
+    }
+    
+    private async Task ToggleStatus(Order order, string stage)
+    {
+        // If this stage is already the current status, step back one
+        string newStatus;
+        if (order.Status == stage)
+        {
+            var index = Array.IndexOf(stages, stage);
+            newStatus = index <= 0 ? "Pending" : stages[index - 1];
+        }
+        else
+        {
+            newStatus = stage;
+        }
+
+        await CartSvc.UpdateOrderStatus(order.OrderId, newStatus);
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        orders = await CartSvc.GetAllOrders();
+    }
+
+    private async Task SetStatus(int orderId, string status)
+    {
+        await CartSvc.UpdateOrderStatus(orderId, status);
+        await Load();
+    }
+
+    private MudBlazor.Color StatusColor(string? status) => status switch
+    {
+        "Pending" => MudBlazor.Color.Default,
+        "Paid" => MudBlazor.Color.Info,
+        "Packed" => MudBlazor.Color.Warning,
+        "Shipped" => MudBlazor.Color.Success,
+        _ => MudBlazor.Color.Default
+    };
+}

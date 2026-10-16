@@ -1,0 +1,96 @@
+@page "/orders"
+@attribute [Authorize]
+@using leatherApp.Data
+@using leatherApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject LeatherShopContext Db
+@inject AuthenticationStateProvider AuthProvider
+@inject IStringLocalizer<SharedResource> L
+
+<PageTitle>My Orders</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+
+    <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-4">
+        @L["MyOrders"]
+    </MudText>
+
+    @if (orders == null)
+    {
+        <MudText>Loading...</MudText>
+    }
+    else if (orders.Count == 0)
+    {
+        <MudText Style="color:var(--brand-medium);">@L["NoOrders"]</MudText>
+    }
+    else
+    {
+        @foreach (var order in orders)
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2" Style="background-color:var(--card-bg);">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudText Typo="Typo.h6" Style="color:var(--text-on-card);">Order #@order.OrderId</MudText>
+                    <MudChip T="string" Color="Color.Default" Size="Size.Small">@order.Status</MudChip>
+                </div>
+                <MudText Typo="Typo.body2" Style="color:var(--text-muted);" Class="mb-3">
+                    @order.OrderDate.ToString("MMMM d, yyyy")
+                </MudText>
+                
+                @if (!string.IsNullOrEmpty(order.ShippingName))
+                {
+                    <MudText Typo="Typo.body2" Style="color:var(--text-muted);" Class="mb-2">
+                        @L["ShipTo"]: @order.ShippingName, @order.ShippingAddress, @order.ShippingPostalCode @order.ShippingCity
+                    </MudText>
+                }
+
+                <MudDivider Class="mb-2" />
+
+                @foreach (var line in order.Items)
+                {
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <div class="d-flex align-center">
+                            @if (line.Product != null && !string.IsNullOrEmpty(line.Product.ImageUrl))
+                            {
+                                <MudLink Href="@($"/product/{line.ProductId}")">
+                                    <MudImage Src="@line.Product.ImageUrl" Height="40" Width="40" ObjectFit="ObjectFit.Cover" Class="mr-2" Style="border-radius:4px;" />
+                                </MudLink>
+                            }
+                            <MudLink Href="@($"/product/{line.ProductId}")" Underline="Underline.Hover">
+                                <MudText Typo="Typo.body2" Style="color:var(--text-on-card);">@line.Product?.Name × @line.Quantity</MudText>
+                            </MudLink>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="color:var(--brand-medium);">@PriceFormatter.Format(line.PriceAtPurchase * line.Quantity)</MudText>
+                    </div>
+                }
+
+                <MudDivider Class="my-2" />
+
+                <div class="d-flex justify-space-between">
+                    <MudText Typo="Typo.subtitle2" Style="color:var(--text-on-card);">@L["Total"]</MudText>
+                    <MudText Typo="Typo.subtitle2" Style="color:var(--brand-primary);">@PriceFormatter.Format(order.TotalAmount)</MudText>
+                </div>
+            </MudPaper>
+        }
+    }
+
+</MudContainer>
+
+@code {
+    private List<Order>? orders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            orders = await Db.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .Where(o => o.Auth0UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+    }
+}

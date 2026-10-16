@@ -1,0 +1,222 @@
+﻿@inject leatherApp.Data.CartService CartSvc
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+@inject IStringLocalizer<SharedResource> L
+@inject NavigationManager Nav
+@inject leatherApp.Data.BreadcrumbService Crumbs
+
+<style>
+    .mud-nav-link.active {
+        background-color: rgba(245, 237, 224, 0.15) !important;
+        color: #F5EDE0 !important;
+        border-left: 3px solid #E8C89A;
+    }
+    .mud-nav-link.active .mud-icon-root {
+        color: #F5EDE0 !important;
+    }
+</style>
+
+@inherits LayoutComponentBase
+@implements IDisposable
+
+<MudThemeProvider Theme="_theme" @bind-IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Style="background-color:#2C2C2A; color:#F1EFE8;">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudLink Href="/" Underline="Underline.None">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:8px; background-color:#5A3E28; display:flex; align-items:center; justify-content:center;">
+                    <span style="font-family:Georgia,serif; font-size:18px; color:#E8C89A;">HL</span>
+                </div>
+                <MudText Typo="Typo.h6" Style="font-family:Georgia,serif; color:#F1EFE8;">@L["BrandTagline"]</MudText>
+            </div>
+        </MudLink>
+        <MudSpacer />
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mr-4">
+            <span @onclick="@(() => SetCulture("sv-SE"))" style="@GetFlagStyle("sv-SE")">🇸🇪</span>
+            <span @onclick="@(() => SetCulture("en-US"))" style="@GetFlagStyle("en-US")">🇬🇧</span>
+        </MudStack>
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit" OnClick="ToggleDarkMode" Class="mr-2" />
+        <AuthorizeView>
+            <NotAuthorized>
+                <MudButton Href="/Login" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Login">@L["Login"]</MudButton>
+            </NotAuthorized>
+            <Authorized>
+                <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Inherit" Href="/orders" Class="mr-2" />
+                <MudBadge Content="cartCount" Color="Color.Error" Overlap="true" Visible="cartCount > 0" Class="mr-4">
+                    <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" Href="/cart" />
+                </MudBadge>
+                <MudText Typo="Typo.body2" Class="mr-3">@L["Hello"], @context.User.Identity?.Name</MudText>
+                <MudButton Href="/Logout" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Logout">@L["Logout"]</MudButton>
+            </Authorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always" Style="background-color:#5A3E28;">
+        <MudNavMenu Class="mud-nav-menu-custom">
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Inherit" Style="color:#F5EDE0;">@L["Home"]</MudNavLink>
+            <MudNavLink Href="category/Wallets" Icon="@Icons.Material.Filled.AccountBalanceWallet" IconColor="Color.Inherit" Style="color:#F5EDE0;">@L["Wallets"]</MudNavLink>
+            <MudNavLink Href="category/Bags" Icon="@Icons.Material.Filled.ShoppingBag" IconColor="Color.Inherit" Style="color:#F5EDE0;">@L["Bags"]</MudNavLink>
+            <MudNavLink Href="category/Belts" Icon="@Icons.Material.Filled.Straighten" IconColor="Color.Inherit" Style="color:#F5EDE0;">@L["Belts"]</MudNavLink>
+            <MudNavLink Href="om-oss" Icon="@Icons.Material.Filled.Info" IconColor="Color.Inherit" Style="color:#F5EDE0;">@L["AboutTitle"]</MudNavLink>
+            <AuthorizeView Roles="Administrator">
+                <Authorized>
+                    <MudNavLink Href="admin" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Inherit" Style="color:#F5EDE0;">Admin</MudNavLink>
+                    <MudNavLink Href="admin/orders" Icon="@Icons.Material.Filled.ListAlt" IconColor="Color.Inherit" Style="color:#F5EDE0;">Orders</MudNavLink>
+                </Authorized>
+            </AuthorizeView>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        @if (breadcrumbs.Count > 1)
+        {
+            <MudContainer MaxWidth="MaxWidth.Large" Class="pt-4">
+                <MudBreadcrumbs Items="breadcrumbs" Class="pa-0"></MudBreadcrumbs>
+            </MudContainer>
+        }
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private int cartCount = 0;
+    
+    private async Task SetCulture(string culture)
+    {
+        await JS.InvokeVoidAsync("setCulture", culture);
+    }
+    
+    private string GetFlagStyle(string culture)
+    {
+        var current = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        bool isActive = current == culture;
+        var size = isActive ? "1.9rem" : "1.5rem";
+        var opacity = isActive ? "1" : "0.7";
+        return $"cursor:pointer; font-size:{size}; opacity:{opacity}; line-height:40px; display:inline-flex; align-items:center;";
+    }
+    
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+    
+    private bool _isDarkMode = false;
+
+    private async Task ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+        await JS.InvokeVoidAsync("setTheme", _isDarkMode);
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        CartSvc.OnChange += HandleCartChanged;
+        Nav.LocationChanged += HandleLocationChanged;
+        Crumbs.OnChange += HandleCrumbsChanged;
+        await RefreshCount();
+    }
+    
+    private void HandleCrumbsChanged()
+    {
+        BuildBreadcrumbs();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshCount()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId != null)
+        {
+            cartCount = await CartSvc.GetCartCount(userId);
+        }
+    }
+
+    private async void HandleCartChanged()
+    {
+        await RefreshCount();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CartSvc.OnChange -= HandleCartChanged;
+        Nav.LocationChanged -= HandleLocationChanged;
+        Crumbs.OnChange -= HandleCrumbsChanged;
+
+    }
+    
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        Crumbs.Clear();
+        BuildBreadcrumbs();
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private List<BreadcrumbItem> breadcrumbs = new();
+
+    protected override void OnParametersSet()
+    {
+        BuildBreadcrumbs();
+    }
+
+    private void BuildBreadcrumbs()
+    {
+        // If a page supplied its own trail, use that
+        if (Crumbs.Custom != null)
+        {
+            breadcrumbs = Crumbs.Custom;
+            return;
+        }
+
+        var path = new Uri(Nav.Uri).AbsolutePath.Trim('/');
+        breadcrumbs = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem(L["Home"], href: "/")
+        };
+
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var skip = new[] { "category", "product", "order-confirmed" };
+        var running = "";
+
+        for (int i = 0; i < segments.Length; i++)
+        {
+            running += "/" + segments[i];
+
+            if (skip.Contains(segments[i], StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            bool isLast = i == segments.Length - 1;
+            var label = L[segments[i]];
+            breadcrumbs.Add(new BreadcrumbItem(label, href: isLast ? null : running, disabled: isLast));
+        }
+    }
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#993C1D",
+            AppbarBackground = "#2C2C2A"
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#C0562E",
+            AppbarBackground = "#2C2C2A",
+            Background = "#161311",
+            Surface = "#2A2422",
+            DrawerBackground = "#5A3E28"
+        }
+    };
+    
+    
+}

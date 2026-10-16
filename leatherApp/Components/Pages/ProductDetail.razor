@@ -1,0 +1,94 @@
+@page "/product/{ProductId:int}"
+@using leatherApp.Data
+@using leatherApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject LeatherShopContext Db
+@inject CartService Cart
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IStringLocalizer<SharedResource> L
+@inject leatherApp.Data.BreadcrumbService Crumbs
+
+<PageTitle>@(item?.Name ?? "Product")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    
+    @if (item == null)
+    {
+        <MudText Style="color:var(--brand-medium);">Product not found.</MudText>
+    }
+    else
+    {
+        <MudPaper Class="pa-8" Elevation="2" Style="background-color:var(--card-bg);">
+            <MudImage Src="@item.ImageUrl" Height="300" ObjectFit="ObjectFit.Cover" Class="mb-4 d-block" Style="width:100%; border-radius:8px;" />
+            <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-2">
+                @item.Name
+            </MudText>
+
+            <MudText Typo="Typo.body1" Style="color:var(--brand-medium);" Class="mb-4">
+                @item.Description
+            </MudText>
+
+            <MudText Typo="Typo.h5" Style="color:var(--brand-primary); font-weight:500;" Class="mb-4">
+                @PriceFormatter.Format(item.Price)
+            </MudText>
+
+            <MudText Typo="Typo.body2" Style="color:var(--text-muted);" Class="mb-4">
+                @L["InStock"]: @item.StockQuantity
+            </MudText>
+
+            <MudButton Variant="Variant.Filled" Size="Size.Large"
+                       Style="background-color:var(--brand-primary); color:var(--brand-primary-text);"
+                       OnClick="AddToCart">
+                @L["AddToCart"]
+            </MudButton>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    private Product? item;
+
+    protected override async Task OnInitializedAsync()
+    {
+        item = await Db.Products
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.ProductId == ProductId);
+
+        if (item != null)
+        {
+            var categoryName = item.Category?.Name ?? "";
+            Crumbs.Set(new List<BreadcrumbItem>
+            {
+                new BreadcrumbItem(L["Home"], href: "/"),
+                new BreadcrumbItem(L[categoryName], href: $"/category/{categoryName}"),
+                new BreadcrumbItem(item.Name ?? "", href: null, disabled: true)
+            });
+        }
+    }
+
+    private async Task AddToCart()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            // Not logged in — send to login
+            Nav.NavigateTo("/Login", forceLoad: true);
+            return;
+        }
+
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId != null && item != null)
+        {
+            await Cart.AddToCart(userId, item.ProductId);
+            Snackbar.Add($"{item.Name} added to cart", Severity.Success);
+        }
+    }
+}

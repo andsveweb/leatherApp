@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <data name="AddToCart"><value>Add to cart</value></data>
+    <data name="BrowseCollection"><value>Browse the collection</value></data>
+    <data name="YourCart"><value>Your Cart</value></data>
+    <data name="Checkout"><value>Checkout</value></data>
+    <data name="Total"><value>Total</value></data>
+    <data name="Home"><value>Home</value></data>
+    <data name="Wallets"><value>Wallets</value></data>
+    <data name="Bags"><value>Bags</value></data>
+    <data name="Belts"><value>Belts</value></data>
+    <data name="Login"><value>Log in</value></data>
+    <data name="Logout"><value>Log out</value></data>
+    <data name="MyOrders"><value>My Orders</value></data>
+    <data name="TheCollection"><value>The Collection</value></data>
+    <data name="InStock"><value>In stock</value></data>
+    <data name="ContinueShopping"><value>Continue shopping</value></data>
+    <data name="CartEmpty"><value>Your cart is empty.</value></data>
+    <data name="NoProducts" xml:space="preserve">
+        <value>No products in this category yet</value>
+    </data>
+    <data name="ThankYou" xml:space="preserve">
+        <value>Thank you for your order!</value>
+    </data>
+    <data name="OrderPlaced" xml:space="preserve">
+        <value>Order #{0} — placed {1}</value>
+    </data>
+    <data name="NoOrders" xml:space="preserve">
+        <value>You haven't placed any orders yet</value>
+    </data>
+    <data name="Each" xml:space="preserve">
+        <value>each</value>
+    </data>
+    <data name="HeroTitle" xml:space="preserve">
+        <value>Handmade leather</value>
+    </data>
+    <data name="HeroSubtitle" xml:space="preserve">
+        <value>Full-grain goods</value>
+    </data>
+    <data name="shop" xml:space="preserve">
+        <value>The Collection</value>
+    </data>
+    <data name="cart" xml:space="preserve">
+        <value>Your Cart</value>
+    </data>
+    <data name="orders" xml:space="preserve">
+        <value>My Orders</value>
+    </data>
+    <data name="admin" xml:space="preserve">
+        <value>Admin</value>
+    </data>
+    <data name="ShopByCategory" xml:space="preserve">
+        <value>Shop by category</value>
+    </data>
+    <data name="Products" xml:space="preserve">
+        <value>products</value>
+    </data>
+    <data name="ShippingAddress" xml:space="preserve">
+        <value>Shipping address</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Address" xml:space="preserve">
+        <value>Address</value>
+    </data>
+    <data name="PostalCode" xml:space="preserve">
+        <value>Postal code</value>
+    </data>
+    <data name="City" xml:space="preserve">
+        <value>City</value>
+    </data>
+    <data name="FillAddress" xml:space="preserve">
+        <value>Please fill in your shipping address</value>
+    </data>
+    <data name="InvalidPostalCode" xml:space="preserve">
+        <value>Please enter a valid 5-digit postal code</value>
+    </data>
+    <data name="MustLogIn" xml:space="preserve">
+        <value>You must be logged in to check out</value>
+    </data>
+    <data name="CheckoutFailed" xml:space="preserve">
+        <value>Something went wrong. Please try again</value>
+    </data>
+    <data name="InvalidCity" xml:space="preserve">
+        <value>Please enter a valid city</value>
+    </data>
+    <data name="InvalidName" xml:space="preserve">
+        <value>Please enter a valid name</value>
+    </data>
+    <data name="ShipTo" xml:space="preserve">
+        <value>Shipping to</value>
+    </data>
+    <data name="BrandTagline" xml:space="preserve">
+        <value>Handmade leather products</value>
+    </data>
+    <data name="Hello" xml:space="preserve">
+        <value>Hallo</value>
+    </data>
+    <data name="AboutTitle" xml:space="preserve">
+        <value>About us</value>
+    </data>
+    <data name="AboutIntro" xml:space="preserve">
+        <value>Discover handmade leather handbags and belts – crafted from vegetable-tanned leather and carefully hand-stitched for the highest quality. Each product is made using traditional techniques that give it a unique feel and long life.</value>
+    </data>
+    <data name="AboutPatina" xml:space="preserve">
+        <value>Vegetable-tanned leather is a natural and durable choice that ages beautifully. Over time, both handbags and belts develop a rich, personal patina – the more they are used, the finer they become.</value>
+    </data>
+    <data name="AboutQuality" xml:space="preserve">
+        <value>Our hand-stitched leather products combine function, durability, and timeless design. Perfect for those who appreciate genuine craftsmanship and want to invest in quality that lasts.</value>
+    </data>
+    <data name="AboutBenefitsTitle" xml:space="preserve">
+        <value>Benefits</value>
+    </data>
+    <data name="AboutBenefit1" xml:space="preserve">
+        <value>Hand-stitched handbags and belts</value>
+    </data>
+    <data name="AboutBenefit2" xml:space="preserve">
+        <value>Vegetable-tanned leather</value>
+    </data>
+    <data name="AboutBenefit3" xml:space="preserve">
+        <value>Develops a beautiful patina over time</value>
+    </data>
+    <data name="AboutBenefit4" xml:space="preserve">
+        <value>Durable and timeless design</value>
+    </data>
+</root>

@@ -1,0 +1,76 @@
+@page "/order-confirmed/{OrderId:int}"
+@attribute [Authorize]
+@using leatherApp.Data
+@using leatherApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject LeatherShopContext Db
+@inject IStringLocalizer<SharedResource> L
+
+<PageTitle>Order Confirmed</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+
+    @if (order == null)
+    {
+        <MudText>Loading...</MudText>
+    }
+    else
+    {
+        <MudPaper Class="pa-8 text-center" Elevation="2" Style="background-color:var(--card-bg);">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color:#4A7C2E; font-size:4rem;" Class="mb-3" />
+
+            <MudText Typo="Typo.h4" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-2">
+                @L["ThankYou"]
+            </MudText>
+
+            <MudText Typo="Typo.body1" Style="color:var(--brand-medium);" Class="mb-4">
+                @L["OrderPlaced", order.OrderId, order.OrderDate.ToString("d MMM yyyy")]
+            </MudText>
+            
+            @if (!string.IsNullOrEmpty(order.ShippingName))
+            {
+                <MudText Typo="Typo.body2" Style="color:var(--text-muted);" Class="mb-4">
+                    @L["ShipTo"]: @order.ShippingName, @order.ShippingAddress, @order.ShippingPostalCode @order.ShippingCity
+                </MudText>
+            }
+
+            <MudDivider Class="mb-4" />
+
+            @foreach (var line in order.Items)
+            {
+                <div class="d-flex justify-space-between mb-2">
+                    <MudText Style="color:var(--text-on-card);">@line.Product?.Name × @line.Quantity</MudText>
+                    <MudText Typo="Typo.body2" Style="color:var(--brand-medium);">@PriceFormatter.Format(line.PriceAtPurchase * line.Quantity)</MudText>
+                </div>
+            }
+
+            <MudDivider Class="my-3" />
+
+            <div class="d-flex justify-space-between">
+                <MudText Typo="Typo.h6" Style="color:var(--text-on-card);">@L["Total"]</MudText>
+                <MudText Typo="Typo.h6" Style="color:var(--brand-primary);">@PriceFormatter.Format(order.TotalAmount)</MudText>
+            </div>
+
+            <MudButton Href="/" Variant="Variant.Filled" Class="mt-5"
+                       Style="background-color:var(--brand-primary); color:var(--brand-primary-text);">
+                @L["ContinueShopping"]
+            </MudButton>
+        </MudPaper>
+    }
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private Order? order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await Db.Orders
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(o => o.OrderId == OrderId);
+    }
+}

@@ -1,0 +1,78 @@
+﻿@page "/"
+@inject IStringLocalizer<SharedResource> L
+@using leatherApp.Data
+@using leatherApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject LeatherShopContext Db
+
+<PageTitle>Andreas Leather Co.</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+
+    <div style="position:sticky; border-radius:12px; overflow:hidden; margin-bottom:1.5rem; min-height:240px; display:flex; align-items:center; background:linear-gradient(90deg,#2C2018 0%,#4A3624 100%); border:1px solid #C9A227; box-shadow:0 0 16px rgba(201,162,39,0.4);">     <div style="padding:2.5rem; max-width:60%;">
+            <MudText Typo="Typo.h3" Style="font-family:Georgia,serif; color:#F1EFE8; line-height:1.15;">
+                @L["HeroTitle"]
+            </MudText>
+            <MudText Typo="Typo.subtitle1" Style="color:#D3C4A8;" Class="mb-4">
+                @L["HeroSubtitle"]
+            </MudText>
+            <MudButton Variant="Variant.Filled" Size="Size.Large"
+                       Href="/shop"
+                       Style="background-color:#C9A227; color:#2C2018;">
+                @L["BrowseCollection"]
+            </MudButton>
+        </div>
+    </div>
+
+    <MudText Typo="Typo.h5" Style="font-family:Georgia,serif; color:var(--brand-dark);" Class="mb-3">
+        @L["ShopByCategory"]
+    </MudText>
+
+    <MudGrid>
+        @foreach (var tile in tiles)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudLink Href="@($"/category/{tile.Name}")" Underline="Underline.None">
+                    <MudPaper Class="category-tile" Style="border-radius:12px; overflow:hidden; cursor:pointer; border:0.5px solid #E0D6C4;" Elevation="1">
+                        <div style="@($"height:150px; background-image:url('{tile.ImageUrl}'); background-size:cover; background-position:center; background-color:#8A5A2B;")"></div>
+                        <div style="padding:12px 16px; background-color:var(--card-bg);">
+                            <MudText Typo="Typo.subtitle1" Style="color:var(--text-on-card); font-weight:500;">@L[tile.Name]</MudText>
+                            <MudText Typo="Typo.caption" Style="color:var(--text-muted);">@tile.Count @L["Products"]</MudText>
+                        </div>
+                    </MudPaper>
+                </MudLink>
+            </MudItem>
+        }
+    </MudGrid>
+
+</MudContainer>
+
+@code {
+    private List<CategoryTile> tiles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var categories = await Db.Categories.OrderBy(c => c.CategoryId).ToListAsync();
+
+        foreach (var cat in categories)
+        {
+            var products = await Db.Products
+                .Where(p => p.CategoryId == cat.CategoryId)
+                .ToListAsync();
+
+            tiles.Add(new CategoryTile
+            {
+                Name = cat.Name ?? "",
+                Count = products.Count,
+                ImageUrl = products.FirstOrDefault(p => !string.IsNullOrEmpty(p.ImageUrl))?.ImageUrl ?? ""
+            });
+        }
+    }
+
+    private class CategoryTile
+    {
+        public string Name { get; set; } = "";
+        public int Count { get; set; }
+        public string ImageUrl { get; set; } = "";
+    }
+}

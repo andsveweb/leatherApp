@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+    <data name="AddToCart"><value>Lägg i varukorg</value></data>
+    <data name="BrowseCollection"><value>Visa alla produkter</value></data>
+    <data name="YourCart"><value>Din varukorg</value></data>
+    <data name="Checkout"><value>Till kassan</value></data>
+    <data name="Total"><value>Totalt</value></data>
+    <data name="Home"><value>Hem</value></data>
+    <data name="Wallets"><value>Plånböcker</value></data>
+    <data name="Bags"><value>Väskor</value></data>
+    <data name="Belts"><value>Bälten</value></data>
+    <data name="Login"><value>Logga in</value></data>
+    <data name="Logout"><value>Logga ut</value></data>
+    <data name="MyOrders"><value>Mina beställningar</value></data>
+    <data name="TheCollection"><value>Kollektionen</value></data>
+    <data name="InStock"><value>I lager</value></data>
+    <data name="ContinueShopping"><value>Fortsätt handla</value></data>
+    <data name="CartEmpty"><value>Din varukorg är tom.</value></data>
+    <data name="NoProducts" xml:space="preserve">
+        <value>Inga produkter i denna kategori än</value>
+    </data>
+    <data name="ThankYou" xml:space="preserve">
+        <value>Tack för din beställning!</value>
+    </data>
+    <data name="OrderPlaced" xml:space="preserve">
+        <value>Beställning #{0} — lagd {1}</value>
+    </data>
+    <data name="NoOrders" xml:space="preserve">
+        <value>Du har inte lagt några beställningar än</value>
+    </data>
+    <data name="Each" xml:space="preserve">
+        <value>styck</value>
+    </data>
+    <data name="HeroTitle" xml:space="preserve">
+        <value>Handgjort läder</value>
+    </data>
+    <data name="HeroSubtitle" xml:space="preserve">
+        <value>Helläderprodukter</value>
+    </data>
+    <data name="shop" xml:space="preserve">
+        <value>Kollektionen</value>
+    </data>
+    <data name="cart" xml:space="preserve">
+        <value>Din varukorg</value>
+    </data>
+    <data name="orders" xml:space="preserve">
+        <value>Mina beställningar</value>
+    </data>
+    <data name="admin" xml:space="preserve">
+        <value>Admin</value>
+    </data>
+    <data name="ShopByCategory" xml:space="preserve">
+        <value>Handla efter kategori</value>
+    </data>
+    <data name="Products" xml:space="preserve">
+        <value>produkter</value>
+    </data>
+    <data name="ShippingAddress" xml:space="preserve">
+        <value>Leveransadress</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Address" xml:space="preserve">
+        <value>Adress</value>
+    </data>
+    <data name="PostalCode" xml:space="preserve">
+        <value>Postnummer</value>
+    </data>
+    <data name="City" xml:space="preserve">
+        <value>Ort</value>
+    </data>
+    <data name="FillAddress" xml:space="preserve">
+        <value>Vänligen fyll i din leveransadress</value>
+    </data>
+    <data name="InvalidPostalCode" xml:space="preserve">
+        <value>Ange ett giltigt postnummer med 5 siffror</value>
+    </data>
+    <data name="MustLogIn" xml:space="preserve">
+        <value>Du måste vara inloggad för att slutföra köpet</value>
+    </data>
+    <data name="CheckoutFailed" xml:space="preserve">
+        <value>Något gick fel. Försök igen</value>
+    </data>
+    <data name="InvalidCity" xml:space="preserve">
+        <value>Ange en giltig ort</value>
+    </data>
+    <data name="InvalidName" xml:space="preserve">
+        <value>Ange ett giltigt namn</value>
+    </data>
+    <data name="ShipTo" xml:space="preserve">
+        <value>Levereras till</value>
+    </data>
+    <data name="BrandTagline" xml:space="preserve">
+        <value>Handgjorda läderprodukter</value>
+    </data>
+    <data name="Hello" xml:space="preserve">
+        <value>Hej</value>
+    </data>
+    <data name="AboutTitle" xml:space="preserve">
+        <value>Om oss</value>
+    </data>
+    <data name="AboutIntro" xml:space="preserve">
+        <value>Upptäck handgjorda handväskor och bälten i läder – tillverkade i vegetabiliskt garvat läder och noggrant handsydda för högsta kvalitet. Varje produkt skapas med traditionella hantverkstekniker som ger en unik känsla och lång livslängd.</value>
+    </data>
+    <data name="AboutQuality" xml:space="preserve">
+        <value>Våra handsydda läderprodukter kombinerar funktion, hållbarhet och tidlös design. Perfekta för dig som uppskattar genuint hantverk och vill investera i kvalitet som håller över tid.</value>
+    </data>
+    <data name="AboutPatina" xml:space="preserve">
+        <value>Det vegetabiliskt garvade lädret är ett naturligt och hållbart val som åldras vackert. Med tiden utvecklar både handväskor och bälten en rik och personlig patina – ju mer de används, desto finare blir de.</value>
+    </data>
+    <data name="AboutBenefitsTitle" xml:space="preserve">
+        <value>Fördelar</value>
+    </data>
+    <data name="AboutBenefit1" xml:space="preserve">
+        <value>Handsydda handväskor och bälten</value>
+    </data>
+    <data name="AboutBenefit2" xml:space="preserve">
+        <value>Vegetabiliskt garvat läder</value>
+    </data>
+    <data name="AboutBenefit3" xml:space="preserve">
+        <value>Utvecklar en vacker patina med tiden</value>
+    </data>
+    <data name="AboutBenefit4" xml:space="preserve">
+        <value>Hållbar och tidlös design</value>
+    </data>
+</root>
